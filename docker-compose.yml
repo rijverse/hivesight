@@ -1,0 +1,209 @@
+# Hivesight — base compose (cowrie, dionaea, loki, promtail, grafana).
+# For AI/ClamAV/orchestrator, compose also reads docker-compose-ai-av.yml.
+#
+# Quick start:  sudo ./bin/up.sh
+# Stop:         sudo ./bin/up.sh --stop
+# Full reset:   sudo ./bin/up.sh --reset   (destroys all data volumes)
+#
+# Ports bound to the host (must be free):
+#   22 (cowrie SSH), 23 (cowrie Telnet), 21 (FTP), 80, 443, 445, 1433,
+#   1883, 3306, 5060, 5061, 6379, 8081, 11211, 27017 (dionaea),
+#   3000 (grafana, bound to 127.0.0.1 only).
+# If you have an SSH server on the host, stop it or change cowrie's port.
+
+# Pin the project name so networks/volumes are hivesight_* regardless of
+# the checkout directory name (egress-block.sh relies on this).
+name: hivesight
+
+services:
+  cowrie:
+    image: cowrie/cowrie@sha256:b4817f185e522f5a66975568ff304ae02c042b65454c2542918f42dbaf1b31fa
+    container_name: cowrie
+    ports:
+      - "22:2222"
+      - "23:2223"
+    volumes:
+      # Operator config overlay: makes cowrie use AuthRandom instead of the
+      # default UserDB. Requires AuthRandom's per-IP state to persist across
+      # container restarts; see cowrie-state below.
+      - ./cowrie.cfg:/cowrie/cowrie-git/etc/cowrie.cfg:ro
+      # Persists AuthRandom's auth_random.json (state_path = var/lib/cowrie in
+      # cowrie.cfg.dist). Without this, every restart would reset all attacker
+      # counters and look like a different server every time.
+      - cowrie-state:/cowrie/cowrie-git/var/lib/cowrie
+      - cowrie-logs:/cowrie/cowrie-git/var/log/cowrie
+    networks:
+      - honeypot-net
+    restart: unless-stopped
+    mem_limit: 512m
+    cpus: "1.0"
+    pids_limit: 256
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  dionaea:
+    image: dinotools/dionaea@sha256:6f06d0a6035c865cb60ef51bd96ff3b1f25ee4bfcd852dad3f551bc2d93464ca
+    container_name: dionaea
+    ports:
+      # Classic
+      - "21:21"      # FTP
+      - "80:80"      # HTTP
+      - "443:443"    # HTTPS
+      - "445:445"    # SMB
+      - "3306:3306"  # MySQL
+      # Expanded: top-attacked services Dionaea can fake
+      - "1433:1433"   # MSSQL
+      - "1883:1883"   # MQTT (IoT)
+      - "5060:5060"   # SIP/VoIP
+      - "5061:5061"   # SIP-TLS
+      - "6379:6379"   # Redis
+      - "8081:8081"   # HTTP-alt (admin panels)
+      - "11211:11211" # Memcached
+      - "27017:27017" # MongoDB
+    volumes:
+      - dionaea-logs:/opt/dionaea/var/log
+      - dionaea-data:/opt/dionaea/var/lib
+    networks:
+      - honeypot-net
+    restart: unless-stopped
+    mem_limit: 1g
+    cpus: "1.0"
+    pids_limit: 512
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  loki:
+    image: grafana/loki@sha256:70b9f699fc9bb868b62f1cfd4f787dfa50242f1fd92e6089787d5d7daea75fe8
+    container_name: loki
+    command: -config.file=/etc/loki/local-config.yaml
+    networks:
+      - backend
+    restart: unless-stopped
+    volumes:
+      - ./loki-config.yaml:/etc/loki/local-config.yaml:ro
+      - loki-data:/loki
+    mem_limit: 512m
+    cpus: "1.0"
+    pids_limit: 256
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  dionaea-sqlite-pump:
+    # Sidecar that tails dionaea.sqlite (written by log_sqlite ihandler) and
+    # appends JSON events to dionaea.json (read by promtail → Loki).
+    # Needed because dionaea's log_json ihandler fails to subscribe to
+    # incidents in this image: log_json loads ("LogJsonHandler ready!") but
+    # no events ever fire — see /tmp/dionaea-img for analysis.
+    image: python:3.11-alpine
+    container_name: dionaea-sqlite-pump
+    command: ["python3", "-u", "/opt/dionaea-sqlite-pump.py"]
+    volumes:
+      - ./dionaea-sqlite-pump.py:/opt/dionaea-sqlite-pump.py:ro
+      - dionaea-data:/opt/dionaea/var/lib:ro
+      - dionaea-logs:/opt/dionaea/var/log
+    # Pure volume-to-volume shovel; it never talks to the network.
+    network_mode: none
+    restart: unless-stopped
+    mem_limit: 64m
+    cpus: "0.2"
+    pids_limit: 64
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    depends_on:
+      dionaea:
+        condition: service_started
+
+  promtail:
+    image: grafana/promtail@sha256:6cfa64ec432b24a912d640e2edb940eeae2666f61861a66c121d763dd7241381
+    container_name: promtail
+    command: -config.file=/etc/promtail/config.yml
+    # Reads the honeypot log volumes directly; only needs backend for Loki.
+    networks:
+      - backend
+    restart: unless-stopped
+    volumes:
+      - ./promtail-config.yml:/etc/promtail/config.yml:ro
+      - cowrie-logs:/var/log/cowrie:ro
+      - dionaea-logs:/var/log/dionaea:ro
+      - promtail-positions:/tmp
+    mem_limit: 256m
+    cpus: "0.5"
+    pids_limit: 128
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    depends_on:
+      loki:
+        condition: service_started
+
+  grafana:
+    image: grafana/grafana@sha256:121a7a9ece6dc10b969f1f96eed64b4f07dfac0d0b8abc070f7cb83bbde86f63
+    container_name: grafana
+    ports:
+      # Loopback only. This host is deliberately attacked; never expose the
+      # dashboard on the same interfaces as the honeypots. Use an SSH tunnel
+      # (ssh -L 3000:localhost:3000) for remote access.
+      - "127.0.0.1:3000:3000"
+    environment:
+      # Override with GRAFANA_ADMIN_PASSWORD in .env for anything beyond a
+      # throwaway lab. Anonymous viewer stays on for convenience since the
+      # port is loopback-only.
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-admin}
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Viewer
+      - GF_USERS_ALLOW_SIGN_UP=false
+    networks:
+      - backend
+    restart: unless-stopped
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./grafana-provisioning/datasources:/etc/grafana/provisioning/datasources:ro
+      - ./grafana-provisioning/dashboards/honeypot.yaml:/etc/grafana/provisioning/dashboards/honeypot.yaml:ro
+      - ./grafana-provisioning/dashboards/files:/var/lib/grafana/dashboards:ro
+      - ./grafana-provisioning/alerting:/etc/grafana/provisioning/alerting:ro
+    mem_limit: 512m
+    cpus: "1.0"
+    pids_limit: 256
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    depends_on:
+      loki:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3000/api/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+networks:
+  honeypot-net:
+    internal: false
+  backend:
+    internal: false
+
+volumes:
+  cowrie-logs:
+  cowrie-state:
+  dionaea-logs:
+  dionaea-data:
+  loki-data:
+  grafana-data:
+  promtail-positions:

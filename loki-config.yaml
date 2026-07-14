@@ -1,0 +1,62 @@
+auth_enabled: false
+
+server:
+  http_listen_port: 3100
+  grpc_listen_port: 9096
+  # 4 MiB gRPC message size is the default; the "Top Credential Pairs" panel
+  # over 7d produces ~12 MiB of intermediate data and gets truncated/timeout.
+  # 64 MiB is generous enough for any single-panel query in this stack.
+  grpc_server_max_send_msg_size: 67108864
+  grpc_server_max_recv_msg_size: 67108864
+
+common:
+  instance_addr: 127.0.0.1
+  path_prefix: /loki
+  storage:
+    filesystem:
+      chunks_directory: /loki/chunks
+      rules_directory: /loki/rules
+  replication_factor: 1
+  ring:
+    kvstore:
+      store: inmemory
+
+schema_config:
+  configs:
+    - from: 2020-10-24
+      store: tsdb
+      object_store: filesystem
+      schema: v13
+      index:
+        prefix: index_
+        period: 24h
+
+limits_config:
+  # Headroom for ingest bursts during scan storms. Stream labels are kept
+  # low-cardinality (job/source/service/eventid/country); per-attacker
+  # fields like src_ip and credentials live in the JSON body and are
+  # grouped at query time.
+  ingestion_rate_mb: 32
+  ingestion_burst_size_mb: 64
+  unordered_writes: true
+  max_query_parallelism: 16
+  # Per-query series cap. The dashboard's "Top Credential Pairs" panel
+  # groups login events by `username / password` label, which can produce
+  # thousands of distinct combinations over the default 7d range. The
+  # default 500 is too tight for that panel; 10000 gives enough headroom
+  # while still protecting Loki from accidentally-quadratic queries.
+  max_query_series: 10000
+  # Per-tenant retention. Compaction/deletion is enabled in the compactor
+  # block below; this controls how long log streams stick around. 30 days
+  # matches the default dashboard time range plus a safety margin.
+  retention_period: 744h0m0s
+
+compactor:
+  working_directory: /loki/compactor
+  compaction_interval: 10m
+  retention_enabled: true
+  retention_delete_delay: 2h
+  delete_request_store: filesystem
+
+analytics:
+  reporting_enabled: false
