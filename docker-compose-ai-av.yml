@@ -1,0 +1,134 @@
+services:
+  ollama:
+    image: ollama/ollama@sha256:509fdf54e23bd50d87af646cb51c0a7a203d6a83cc4d6695b3b08c5be1c62c0a
+    container_name: ollama
+    restart: unless-stopped
+    networks:
+      - backend
+    volumes:
+      - ollama-data:/root/.ollama
+    mem_limit: 1200m
+    cpus: "1.5"
+    pids_limit: 256
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    healthcheck:
+      test: ["CMD", "/bin/ollama", "list"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  ollama-pull:
+    image: ollama/ollama@sha256:509fdf54e23bd50d87af646cb51c0a7a203d6a83cc4d6695b3b08c5be1c62c0a
+    container_name: ollama-pull
+    networks:
+      - backend
+    volumes:
+      - ollama-data:/root/.ollama
+    environment:
+      - OLLAMA_HOST=http://ollama:11434
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        for i in $$(seq 1 60); do
+          if /bin/ollama list >/dev/null 2>&1; then
+            if /bin/ollama pull qwen2.5:0.5b; then
+              echo MODEL_READY; exit 0;
+            fi
+          fi
+          sleep 2
+        done
+        echo MODEL_PULL_FAILED >&2; exit 1
+    depends_on:
+      ollama:
+        condition: service_started
+    restart: "no"
+    mem_limit: 800m
+    cpus: "1.0"
+    logging:
+      driver: json-file
+      options:
+        max-size: "5m"
+        max-file: "2"
+
+  clamav:
+    image: clamav/clamav@sha256:6f4a9e7d616ffc8d1070200fe35ac860735fdd522161a1043f94856e6ee13c28
+    container_name: clamav
+    restart: unless-stopped
+    networks:
+      - backend
+    mem_limit: 1800m
+    cpus: "1.0"
+    pids_limit: 128
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    healthcheck:
+      test: ["CMD", "/usr/sbin/clamd", "--version"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+
+  ai-orchestrator:
+    image: python@sha256:25976e9d34a0fab1f278cae931f34c8303d97bf0c0d7f85b6b4dcf641d7702a4
+    container_name: ai-orchestrator
+    restart: unless-stopped
+    networks:
+      - backend
+    environment:
+      - PYTHONUNBUFFERED=1
+      - ORCH_FORCE_BACKFILL=${ORCH_FORCE_BACKFILL:-0}
+    volumes:
+      - ./orchestrator.py:/app/orchestrator.py:ro
+      - ./orchestrator-data/country-map.csv:/app/country-map.csv:ro
+      - ./orchestrator-data/country-centroids.csv:/app/country-centroids.csv:ro
+      - cowrie-logs:/var/log/cowrie:ro
+      - dionaea-logs:/opt/dionaea/var/log:ro
+      # Same named volume dionaea writes its captures to; the scan poller
+      # walks dionaea/binaries under this mount.
+      - dionaea-data:/opt/dionaea/var/lib:ro
+      - orchestrator-state:/var/lib/orchestrator
+    tmpfs:
+      - /tmp:size=64m
+    command: ["python", "/app/orchestrator.py"]
+    depends_on:
+      ollama-pull:
+        condition: service_completed_successfully
+      loki:
+        condition: service_started
+      cowrie:
+        condition: service_started
+      dionaea:
+        condition: service_started
+      clamav:
+        condition: service_started
+    read_only: true
+    mem_limit: 256m
+    cpus: "1.0"
+    pids_limit: 256
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+# backend and the shared cowrie/dionaea volumes are defined in the base
+# docker-compose.yml; this file is only ever used together with it (see
+# bin/up.sh). Declaring them external here would stop compose from creating
+# them on a fresh host and would exempt them from `down -v`.
+networks:
+  backend:
+
+volumes:
+  ollama-data:
+  orchestrator-state:
+  cowrie-logs:
+  dionaea-logs:
+  dionaea-data:
