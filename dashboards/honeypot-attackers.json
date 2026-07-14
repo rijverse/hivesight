@@ -1,0 +1,270 @@
+{
+  "annotations": {
+    "list": []
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "links": [
+    {
+      "asDropdown": false,
+      "icon": "external link",
+      "includeVars": false,
+      "keepTime": true,
+      "tags": [],
+      "targetBlank": false,
+      "title": "Honeypot Threat Overview",
+      "type": "link",
+      "url": "/d/honeypot-overview/"
+    },
+    {
+      "asDropdown": false,
+      "icon": "external link",
+      "includeVars": false,
+      "keepTime": true,
+      "tags": [],
+      "targetBlank": false,
+      "title": "Credentials",
+      "type": "link",
+      "url": "/d/honeypot-credentials/"
+    },
+    {
+      "asDropdown": false,
+      "icon": "external link",
+      "includeVars": false,
+      "keepTime": true,
+      "tags": [],
+      "targetBlank": false,
+      "title": "AI & Malware Defense",
+      "type": "link",
+      "url": "/d/honeypot-ai-malware/"
+    },
+    {
+      "asDropdown": false,
+      "icon": "external link",
+      "includeVars": false,
+      "keepTime": true,
+      "tags": [],
+      "targetBlank": false,
+      "title": "Honeypot Service Activity",
+      "type": "link",
+      "url": "/d/honeypot-ports/"
+    },
+    {
+      "asDropdown": false,
+      "icon": "external link",
+      "includeVars": false,
+      "keepTime": true,
+      "tags": [],
+      "targetBlank": false,
+      "title": "SSH Login Behavior",
+      "type": "link",
+      "url": "/d/honeypot-ssh-behavior/"
+    }
+  ],
+  "liveNow": true,
+  "panels": [
+    {
+      "datasource": {
+        "type": "loki",
+        "uid": "bfrvx638cgpa8d"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "continuous-GrYlRd"
+          },
+          "custom": {
+            "neutral": 0
+          },
+          "min": 0,
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 12,
+        "x": 0,
+        "y": 0
+      },
+      "id": 5,
+      "options": {
+        "displayMode": "gradient",
+        "minVizHeight": 10,
+        "minVizWidth": 8,
+        "namePlacement": "left",
+        "orientation": "horizontal",
+        "showUnfilled": false,
+        "valueDisplayMode": "text",
+        "valueMode": "text"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "bfrvx638cgpa8d"
+          },
+          "expr": "topk(10, sum by (src_ip) (count_over_time({job=~\"$job\"} | json | __error__=\"\" | src_ip!=\"\" [$__range])))",
+          "instant": true,
+          "legendFormat": "{{src_ip}}",
+          "queryType": "instant",
+          "refId": "A"
+        }
+      ],
+      "title": "Top Cowrie IPs",
+      "type": "bargauge",
+      "collapsed": false
+    },
+    {
+      "datasource": {
+        "type": "loki",
+        "uid": "bfrvx638cgpa8d"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 8
+      },
+      "id": 7,
+      "options": {
+        "dedupStrategy": "none",
+        "enableLogDetails": true,
+        "prettifyLogMessage": false,
+        "showCommonLabels": false,
+        "showLabels": false,
+        "showTime": true,
+        "sortOrder": "Descending",
+        "wrapLogMessage": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "bfrvx638cgpa8d"
+          },
+          "expr": "{job=~\"$job\"} | json | eventid=\"cowrie.command.input\" | line_format \"[CMD] {{.src_ip}} \u2192 {{.input}}\"",
+          "queryType": "range",
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "bfrvx638cgpa8d"
+          },
+          "expr": "{job=~\"$job\", source=\"qwen-llm\"} | json | event_type=\"ai_threat_analysis\" | line_format \"[AI {{.category}}|{{.severity}}] {{.src_ip}}: {{.summary}} ({{.attacker_command}})\"",
+          "queryType": "range",
+          "refId": "B"
+        }
+      ],
+      "title": "Attacker Commands & AI Verdicts",
+      "type": "logs"
+    },
+    {
+      "datasource": {
+        "type": "loki",
+        "uid": "bfrvx638cgpa8d"
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 24,
+        "x": 0,
+        "y": 17
+      },
+      "id": 9,
+      "options": {
+        "dedupStrategy": "none",
+        "enableLogDetails": true,
+        "prettifyLogMessage": false,
+        "showCommonLabels": false,
+        "showLabels": false,
+        "showTime": true,
+        "sortOrder": "Descending",
+        "wrapLogMessage": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "bfrvx638cgpa8d"
+          },
+          "expr": "{job=~\"$job\"} | json | eventid=\"cowrie.login.success\" | line_format \"\u2713 SUCCESS   {{.src_ip}}   user={{.username}}   pass={{.password}}\"",
+          "queryType": "range",
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "bfrvx638cgpa8d"
+          },
+          "expr": "{job=~\"$job\"} | json | eventid=\"cowrie.login.failed\"  | line_format \"\u2717 FAILED    {{.src_ip}}   user={{.username}}   pass={{.password}}\"",
+          "queryType": "range",
+          "refId": "B"
+        }
+      ],
+      "title": "Login Activity (Success & Failure)",
+      "type": "logs"
+    }
+  ],
+  "refresh": "30s",
+  "schemaVersion": 39,
+  "tags": [
+    "honeypot",
+    "ai",
+    "loki"
+  ],
+  "templating": {
+    "list": [
+      {
+        "name": "job",
+        "label": "Service",
+        "type": "custom",
+        "query": "cowrie, dionaea, ai-orchestrator, .+",
+        "options": [
+          {
+            "text": "cowrie",
+            "value": "cowrie",
+            "selected": true
+          },
+          {
+            "text": "dionaea",
+            "value": "dionaea",
+            "selected": false
+          },
+          {
+            "text": "ai-orchestrator",
+            "value": "ai-orchestrator",
+            "selected": false
+          },
+          {
+            "text": "All services",
+            "value": ".+",
+            "selected": false
+          }
+        ],
+        "current": {
+          "text": "cowrie",
+          "value": "cowrie",
+          "selected": true
+        },
+        "hide": 0,
+        "skipUrlSync": false,
+        "multi": false,
+        "includeAll": false,
+        "regex": "",
+        "allValue": null
+      }
+    ]
+  },
+  "time": {
+    "from": "now-7d",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "Attackers",
+  "uid": "honeypot-attackers",
+  "version": 2,
+  "weekStart": ""
+}

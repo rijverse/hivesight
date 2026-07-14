@@ -1,0 +1,228 @@
+apiVersion: 1
+
+groups:
+  - orgId: 1
+    name: honeypot-critical
+    folder: Honeypot
+    interval: 1m
+    rules:
+      # 1. Loki dropping events — orchestrator can't reach Loki (DNS, payload size, etc.)
+      # Caveat for this rule and rule 4: the heartbeat counters reset to 0
+      # when the orchestrator restarts, so max-min over the window briefly
+      # overstates the delta right after a redeploy and can false-positive.
+      - uid: loki-drops-spike
+        title: Loki Drops > 10 / hour
+        condition: B
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 3600
+              to: 0
+            datasourceUid: bfrvx638cgpa8d
+            model:
+              expr: |
+                max(max_over_time({job="ai-orchestrator", source="orchestrator"}
+                  | json | event_type="orchestrator_heartbeat"
+                  | unwrap loki_drops [1h]))
+                -
+                min(min_over_time({job="ai-orchestrator", source="orchestrator"}
+                  | json | event_type="orchestrator_heartbeat"
+                  | unwrap loki_drops [1h]))
+              instant: true
+              refId: A
+              queryType: range
+          - refId: B
+            datasourceUid: '__expr__'
+            model:
+              type: threshold
+              refId: B
+              expression: A
+              conditions:
+                - evaluator:
+                    type: gt
+                    params: [10]
+        noDataState: OK
+        execErrState: Alerting
+        for: 5m
+        annotations:
+          summary: "Loki dropped events from the orchestrator"
+          description: |
+            The orchestrator lost {{ $value }} events to Loki in the last hour.
+            Likely causes: Loki outage, DNS resolution failure between
+            ai-orchestrator and loki, or an oversized event payload.
+        labels:
+          severity: warning
+          team: honeypot
+
+      # 2. Brute-force surge — more than 200 failed SSH logins in 5 minutes
+      - uid: brute-force-surge
+        title: SSH Brute-Force Surge (>200 failed logins / 5m)
+        condition: B
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: bfrvx638cgpa8d
+            model:
+              expr: sum(count_over_time({job="cowrie", eventid="cowrie.login.failed"}[5m]))
+              instant: true
+              refId: A
+              queryType: range
+          - refId: B
+            datasourceUid: '__expr__'
+            model:
+              type: threshold
+              refId: B
+              expression: A
+              conditions:
+                - evaluator:
+                    type: gt
+                    params: [200]
+        noDataState: OK
+        execErrState: Alerting
+        for: 0m
+        annotations:
+          summary: "SSH brute-force surge"
+          description: |
+            {{ $value }} failed SSH logins in the last 5 minutes
+            (threshold: 200). This is well above the baseline scan rate and
+            may indicate an active attack campaign.
+        labels:
+          severity: critical
+          team: honeypot
+
+      # 3. AI queue backlog — orchestrator's in-memory queue is growing
+      - uid: ai-queue-backlog
+        title: AI Queue Depth > 20
+        condition: B
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 600
+              to: 0
+            datasourceUid: bfrvx638cgpa8d
+            model:
+              expr: |
+                max(max_over_time({job="ai-orchestrator", source="orchestrator"}
+                  | json | event_type="orchestrator_heartbeat"
+                  | unwrap queued [10m]))
+              instant: true
+              refId: A
+              queryType: range
+          - refId: B
+            datasourceUid: '__expr__'
+            model:
+              type: threshold
+              refId: B
+              expression: A
+              conditions:
+                - evaluator:
+                    type: gt
+                    params: [20]
+        noDataState: OK
+        execErrState: Alerting
+        for: 5m
+        annotations:
+          summary: "AI orchestrator queue is backed up"
+          description: |
+            Queue depth has been {{ $value }} for at least 5 minutes.
+            The orchestrator is not keeping up with inbound events —
+            likely Ollama is overloaded or the worker count is too low.
+        labels:
+          severity: warning
+          team: honeypot
+
+      # 4. Ollama (Qwen) errors — sustained inference failures
+      - uid: ollama-errors-sustained
+        title: Ollama Errors > 5 / hour
+        condition: B
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 3600
+              to: 0
+            datasourceUid: bfrvx638cgpa8d
+            model:
+              expr: |
+                max(max_over_time({job="ai-orchestrator", source="orchestrator"}
+                  | json | event_type="orchestrator_heartbeat"
+                  | unwrap ollama_errors [1h]))
+                -
+                min(min_over_time({job="ai-orchestrator", source="orchestrator"}
+                  | json | event_type="orchestrator_heartbeat"
+                  | unwrap ollama_errors [1h]))
+              instant: true
+              refId: A
+              queryType: range
+          - refId: B
+            datasourceUid: '__expr__'
+            model:
+              type: threshold
+              refId: B
+              expression: A
+              conditions:
+                - evaluator:
+                    type: gt
+                    params: [5]
+        noDataState: OK
+        execErrState: Alerting
+        for: 0m
+        annotations:
+          summary: "Ollama inference errors"
+          description: |
+            {{ $value }} Ollama errors in the last hour
+            (threshold: 5). Check that the ollama container is healthy
+            and that the qwen model is still pulled.
+        labels:
+          severity: warning
+          team: honeypot
+
+      # 5. ClamAV not scanning — malware scan counter not advancing
+      - uid: clamav-scan-stall
+        title: ClamAV Scans Stalled (0 scans in 1h)
+        condition: B
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 3600
+              to: 0
+            datasourceUid: bfrvx638cgpa8d
+            model:
+              # Raw scan-count delta over the hour; the threshold below fires
+              # when it stays under 1. Comparing `== 0` in LogQL would not
+              # work: comparisons there filter series rather than produce a
+              # boolean, and `eq` is not a valid threshold evaluator anyway.
+              expr: |
+                max(max_over_time({job="ai-orchestrator", source="orchestrator"}
+                  | json | event_type="orchestrator_heartbeat"
+                  | unwrap scan_triggered [1h]))
+                -
+                min(min_over_time({job="ai-orchestrator", source="orchestrator"}
+                  | json | event_type="orchestrator_heartbeat"
+                  | unwrap scan_triggered [1h]))
+              instant: true
+              refId: A
+              queryType: range
+          - refId: B
+            datasourceUid: '__expr__'
+            model:
+              type: threshold
+              refId: B
+              expression: A
+              conditions:
+                - evaluator:
+                    type: lt
+                    params: [1]
+        noDataState: OK
+        execErrState: Alerting
+        for: 30m
+        annotations:
+          summary: "ClamAV appears stalled"
+          description: |
+            No new ClamAV scans have been triggered in the last hour.
+            Either clamd is down, the dionaea capture pump has stopped,
+            or the orchestrator's scan worker has died.
+        labels:
+          severity: critical
+          team: honeypot

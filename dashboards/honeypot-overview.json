@@ -1,0 +1,951 @@
+{
+  "annotations": {
+    "list": []
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "links": [
+    {
+      "asDropdown": false,
+      "icon": "external link",
+      "includeVars": false,
+      "keepTime": true,
+      "tags": [],
+      "targetBlank": false,
+      "title": "Attackers",
+      "type": "link",
+      "url": "/d/honeypot-attackers/"
+    },
+    {
+      "asDropdown": false,
+      "icon": "external link",
+      "includeVars": false,
+      "keepTime": true,
+      "tags": [],
+      "targetBlank": false,
+      "title": "Credentials",
+      "type": "link",
+      "url": "/d/honeypot-credentials/"
+    },
+    {
+      "asDropdown": false,
+      "icon": "external link",
+      "includeVars": false,
+      "keepTime": true,
+      "tags": [],
+      "targetBlank": false,
+      "title": "AI & Malware Defense",
+      "type": "link",
+      "url": "/d/honeypot-ai-malware/"
+    },
+    {
+      "asDropdown": false,
+      "icon": "external link",
+      "includeVars": false,
+      "keepTime": true,
+      "tags": [],
+      "targetBlank": false,
+      "title": "Honeypot Service Activity",
+      "type": "link",
+      "url": "/d/honeypot-ports/"
+    },
+    {
+      "asDropdown": false,
+      "icon": "external link",
+      "includeVars": false,
+      "keepTime": true,
+      "tags": [],
+      "targetBlank": false,
+      "title": "SSH Login Behavior",
+      "type": "link",
+      "url": "/d/honeypot-ssh-behavior/"
+    }
+  ],
+  "liveNow": true,
+  "panels": [
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 100,
+      "panels": [],
+      "title": "Overview",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "loki",
+        "uid": "bfrvx638cgpa8d"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "fixedColor": "blue",
+            "mode": "fixed"
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 2,
+        "w": 8,
+        "h": 4
+      },
+      "id": 1,
+      "options": {
+        "colorMode": "background_solid",
+        "graphMode": "area",
+        "justifyMode": "center",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "value",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "bfrvx638cgpa8d"
+          },
+          "expr": "sum(count_over_time({job=\"cowrie\"}[$__range]))",
+          "legendFormat": "Cowrie Events",
+          "queryType": "range",
+          "refId": "A"
+        }
+      ],
+      "title": "Cowrie Events",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "loki",
+        "uid": "bfrvx638cgpa8d"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "fixedColor": "purple",
+            "mode": "fixed"
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "x": 8,
+        "y": 2,
+        "w": 8,
+        "h": 4
+      },
+      "id": 2,
+      "options": {
+        "colorMode": "background_solid",
+        "graphMode": "area",
+        "justifyMode": "center",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "value",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "bfrvx638cgpa8d"
+          },
+          "expr": "sum(count_over_time({job=\"dionaea\"}[$__range]))",
+          "legendFormat": "Dionaea Events",
+          "queryType": "range",
+          "refId": "A"
+        }
+      ],
+      "title": "Dionaea Events",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "loki",
+        "uid": "bfrvx638cgpa8d"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "fixedColor": "green",
+            "mode": "fixed"
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "x": 16,
+        "y": 2,
+        "w": 8,
+        "h": 4
+      },
+      "id": 3,
+      "options": {
+        "colorMode": "background_solid",
+        "graphMode": "area",
+        "justifyMode": "center",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "value",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "bfrvx638cgpa8d"
+          },
+          "expr": "sum(count_over_time({job=~\"$job\", source=\"qwen-llm\"}[$__range]))",
+          "legendFormat": "AI Analyses",
+          "queryType": "range",
+          "refId": "A"
+        }
+      ],
+      "title": "AI Analyses",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "loki",
+        "uid": "bfrvx638cgpa8d"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "axisLabel": "Events",
+            "axisPlacement": "auto",
+            "drawStyle": "line",
+            "fillOpacity": 12,
+            "gradientMode": "opacity",
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "showPoints": "never",
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            }
+          },
+          "unit": "short"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Cowrie"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "blue",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Dionaea"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "purple",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "AI Analysis"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "green",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 24,
+        "x": 0,
+        "y": 17
+      },
+      "id": 4,
+      "options": {
+        "legend": {
+          "calcs": [
+            "sum",
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "bfrvx638cgpa8d"
+          },
+          "expr": "topk(3, sum by (job) (count_over_time({job=~\"$job\"}[$__auto])))",
+          "legendFormat": "{{job}}",
+          "refId": "A"
+        }
+      ],
+      "title": "Event Volume",
+      "type": "timeseries"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 24
+      },
+      "id": 101,
+      "panels": [],
+      "title": "Attack Activity",
+      "type": "row"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 27
+      },
+      "id": 105,
+      "panels": [],
+      "title": "Operational KPIs",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "loki",
+        "uid": "bfrvx638cgpa8d"
+      },
+      "description": "Cowrie events received in the last 5 minutes \u2014 non-zero means the feed is live.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "green",
+                "value": 1
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 28,
+        "w": 4,
+        "h": 4
+      },
+      "id": 30,
+      "options": {
+        "colorMode": "background_solid",
+        "graphMode": "area",
+        "justifyMode": "center",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "value",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "bfrvx638cgpa8d"
+          },
+          "expr": "sum(count_over_time({job=\"cowrie\"}[5m]))",
+          "legendFormat": "Cowrie events / 5m",
+          "queryType": "range",
+          "refId": "A"
+        }
+      ],
+      "title": "Cowrie Events / 5m",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "loki",
+        "uid": "bfrvx638cgpa8d"
+      },
+      "description": "Dionaea connection events in the last 5 minutes \u2014 non-zero means the feed is live.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "green",
+                "value": 1
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "x": 4,
+        "y": 28,
+        "w": 4,
+        "h": 4
+      },
+      "id": 31,
+      "options": {
+        "colorMode": "background_solid",
+        "graphMode": "area",
+        "justifyMode": "center",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "value",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "bfrvx638cgpa8d"
+          },
+          "expr": "sum(count_over_time({job=\"dionaea\"}[5m]))",
+          "legendFormat": "Dionaea events / 5m",
+          "queryType": "range",
+          "refId": "A"
+        }
+      ],
+      "title": "Dionaea Events / 5m",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "loki",
+        "uid": "bfrvx638cgpa8d"
+      },
+      "description": "Cowrie sessions opened minus sessions closed in the time range.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "fixedColor": "blue",
+            "mode": "fixed"
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "x": 8,
+        "y": 28,
+        "w": 4,
+        "h": 4
+      },
+      "id": 32,
+      "options": {
+        "colorMode": "background_solid",
+        "graphMode": "area",
+        "justifyMode": "center",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "value",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "bfrvx638cgpa8d"
+          },
+          "expr": "count(count_over_time({job=~\"$job\"} | json | eventid=\"cowrie.session.connect\" [$__range])) - count(count_over_time({job=~\"$job\"} | json | eventid=\"cowrie.session.closed\" [$__range]))",
+          "legendFormat": "Active Sessions",
+          "queryType": "range",
+          "refId": "A"
+        }
+      ],
+      "title": "Active Cowrie Sessions",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "loki",
+        "uid": "bfrvx638cgpa8d"
+      },
+      "description": "Total malware scans performed in the time range.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "fixedColor": "purple",
+            "mode": "fixed"
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 28,
+        "w": 4,
+        "h": 4
+      },
+      "id": 33,
+      "options": {
+        "colorMode": "background_solid",
+        "graphMode": "area",
+        "justifyMode": "center",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "value",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "bfrvx638cgpa8d"
+          },
+          "expr": "sum(count_over_time({job=~\"$job\", source=\"clamav\"} | json | event_type=\"malware_scan\" [$__range]))",
+          "legendFormat": "Total Scans",
+          "queryType": "range",
+          "refId": "A"
+        }
+      ],
+      "title": "Total ClamAV Scans",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "loki",
+        "uid": "bfrvx638cgpa8d"
+      },
+      "description": "Pending events waiting in the orchestrator queue (most recent heartbeat).",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 100
+              },
+              {
+                "color": "red",
+                "value": 1000
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "x": 16,
+        "y": 28,
+        "w": 4,
+        "h": 4
+      },
+      "id": 34,
+      "options": {
+        "colorMode": "background_solid",
+        "graphMode": "area",
+        "justifyMode": "center",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "value",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "bfrvx638cgpa8d"
+          },
+          "expr": "max(max_over_time({job=~\"$job\", source=\"orchestrator\"} | json | event_type=\"orchestrator_heartbeat\" | unwrap queued [$__range]))",
+          "legendFormat": "Queue Depth",
+          "queryType": "range",
+          "refId": "A"
+        }
+      ],
+      "title": "AI Queue Depth",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "loki",
+        "uid": "bfrvx638cgpa8d"
+      },
+      "description": "Total events that failed to ship to Loki (heartbeat cumulative).",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 1
+              },
+              {
+                "color": "red",
+                "value": 100
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "x": 20,
+        "y": 28,
+        "w": 4,
+        "h": 4
+      },
+      "id": 35,
+      "options": {
+        "colorMode": "background_solid",
+        "graphMode": "area",
+        "justifyMode": "center",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "value",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "bfrvx638cgpa8d"
+          },
+          "expr": "max(max_over_time({job=~\"$job\", source=\"orchestrator\"} | json | event_type=\"orchestrator_heartbeat\" | unwrap loki_drops [$__range]))",
+          "legendFormat": "Loki Drops",
+          "queryType": "range",
+          "refId": "A"
+        }
+      ],
+      "title": "Loki Drops",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "loki",
+        "uid": "bfrvx638cgpa8d"
+      },
+      "description": "Each marker shows the country centroid of a source IP. Marker size scales with the number of connections from that country. Hover for source IP and protocol.",
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 50
+              },
+              {
+                "color": "red",
+                "value": 200
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 33,
+        "w": 24,
+        "h": 14
+      },
+      "id": 40,
+      "options": {
+        "basemap": {
+          "config": {
+            "theme": "dark"
+          },
+          "type": "carto"
+        },
+        "controls": {
+          "showAttribution": true,
+          "showLayerToggle": false,
+          "showLegend": true,
+          "showPan": true,
+          "showScale": false,
+          "showTitle": false,
+          "showZoom": true
+        },
+        "layers": [
+          {
+            "config": {
+              "showLegend": true,
+              "style": {
+                "color": {
+                  "fixed": "red",
+                  "mode": "thresholds"
+                },
+                "opacity": 0.7,
+                "size": {
+                  "field": "Value",
+                  "fixed": 6,
+                  "max": 30,
+                  "min": 4,
+                  "mode": "linear"
+                },
+                "symbol": {
+                  "fixed": "img/icons/marker/circle.svg",
+                  "mode": "fixed"
+                }
+              }
+            },
+            "location": {
+              "latitude": "lat",
+              "longitude": "lon",
+              "mode": "coords"
+            },
+            "name": "Attacker countries",
+            "tooltip": true,
+            "type": "markers"
+          },
+          {
+            "config": {
+              "showLegend": false,
+              "style": {
+                "color": {
+                  "fixed": "transparent",
+                  "mode": "fixed"
+                },
+                "fillOpacity": 0,
+                "strokeColor": {
+                  "fixed": "gray",
+                  "mode": "fixed"
+                }
+              }
+            },
+            "name": "World borders",
+            "type": "geojson"
+          }
+        ],
+        "view": {
+          "allLayers": true,
+          "center": [
+            15,
+            25
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              }
+            }
+          },
+          "id": "fit",
+          "lat": 25,
+          "lon": 15,
+          "zoom": 1.4
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "bfrvx638cgpa8d"
+          },
+          "expr": "topk(50, sum by (country, lat, lon) (count_over_time({job=~\"$job\", source=\"raw\", country!=\"\", country!=\"XX\"} | json | __error__=\"\" [$__range])))",
+          "instant": false,
+          "legendFormat": "connections",
+          "queryType": "range",
+          "refId": "A"
+        }
+      ],
+      "title": "Attacker Origins (World Map)",
+      "transformations": [
+        {
+          "id": "labelsToFields",
+          "options": {
+            "mode": "columns"
+          }
+        },
+        {
+          "id": "convertFieldType",
+          "options": {
+            "fields": {
+              "lat": "number",
+              "lon": "number"
+            }
+          }
+        }
+      ],
+      "type": "geomap"
+    }
+  ],
+  "refresh": "30s",
+  "schemaVersion": 39,
+  "tags": [
+    "honeypot",
+    "ai",
+    "loki"
+  ],
+  "templating": {
+    "list": [
+      {
+        "name": "job",
+        "label": "Service",
+        "type": "custom",
+        "query": "cowrie, dionaea, ai-orchestrator, .+",
+        "options": [
+          {
+            "text": "cowrie",
+            "value": "cowrie",
+            "selected": true
+          },
+          {
+            "text": "dionaea",
+            "value": "dionaea",
+            "selected": false
+          },
+          {
+            "text": "ai-orchestrator",
+            "value": "ai-orchestrator",
+            "selected": false
+          },
+          {
+            "text": "All services",
+            "value": ".+",
+            "selected": false
+          }
+        ],
+        "current": {
+          "text": "cowrie",
+          "value": "cowrie",
+          "selected": true
+        },
+        "hide": 0,
+        "skipUrlSync": false,
+        "multi": false,
+        "includeAll": false,
+        "regex": "",
+        "allValue": null
+      }
+    ]
+  },
+  "time": {
+    "from": "now-7d",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "Honeypot Threat Overview",
+  "uid": "honeypot-overview",
+  "version": 2,
+  "weekStart": ""
+}

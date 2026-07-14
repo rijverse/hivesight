@@ -1,0 +1,15 @@
+apiVersion: 1
+
+# Default contact point — Grafana internal "noop" receiver so alerts
+# are evaluated and visible in the Alerting UI but don't try to call out
+# to Slack/PagerDuty/etc. Replace with a real webhook in a real deployment.
+contactPoints:
+  - orgId: 1
+    name: stack-default
+    receivers:
+      - uid: stack-default-receiver
+        type: webhook
+        # Disabled intentionally — enables evaluation without network egress.
+        settings:
+          url: http://127.0.0.1:1
+        disableResolveMessage: false

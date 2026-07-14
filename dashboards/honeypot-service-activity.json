@@ -1,0 +1,948 @@
+{
+  "annotations": {
+    "list": []
+  },
+  "editable": true,
+  "graphTooltip": 1,
+  "links": [
+    {
+      "asDropdown": false,
+      "icon": "external link",
+      "includeVars": false,
+      "keepTime": true,
+      "tags": [],
+      "targetBlank": false,
+      "title": "Honeypot Threat Overview",
+      "type": "link",
+      "url": "/d/honeypot-overview/"
+    },
+    {
+      "asDropdown": false,
+      "icon": "external link",
+      "includeVars": false,
+      "keepTime": true,
+      "tags": [],
+      "targetBlank": false,
+      "title": "Attackers",
+      "type": "link",
+      "url": "/d/honeypot-attackers/"
+    },
+    {
+      "asDropdown": false,
+      "icon": "external link",
+      "includeVars": false,
+      "keepTime": true,
+      "tags": [],
+      "targetBlank": false,
+      "title": "Credentials",
+      "type": "link",
+      "url": "/d/honeypot-credentials/"
+    },
+    {
+      "asDropdown": false,
+      "icon": "external link",
+      "includeVars": false,
+      "keepTime": true,
+      "tags": [],
+      "targetBlank": false,
+      "title": "AI & Malware Defense",
+      "type": "link",
+      "url": "/d/honeypot-ai-malware/"
+    },
+    {
+      "asDropdown": false,
+      "icon": "external link",
+      "includeVars": false,
+      "keepTime": true,
+      "tags": [],
+      "targetBlank": false,
+      "title": "SSH Login Behavior",
+      "type": "link",
+      "url": "/d/honeypot-ssh-behavior/"
+    }
+  ],
+  "panels": [
+    {
+      "type": "row",
+      "title": "Overview",
+      "id": 100,
+      "collapsed": false,
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 24,
+        "h": 1
+      },
+      "panels": []
+    },
+    {
+      "type": "stat",
+      "title": "Connections",
+      "description": "Total accepted connections in the selected time range for the chosen service.",
+      "id": 1,
+      "gridPos": {
+        "x": 0,
+        "y": 1,
+        "w": 6,
+        "h": 4
+      },
+      "datasource": {
+        "type": "loki",
+        "uid": "bfrvx638cgpa8d"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(count_over_time({job=~\"cowrie|dionaea\", service=~\"${service}\"} | json | eventid=~\"cowrie.session.connect|dionaea.connection.accept\" [$__range]))",
+          "queryType": "instant",
+          "datasource": {
+            "type": "loki",
+            "uid": "bfrvx638cgpa8d"
+          },
+          "instant": true,
+          "legendFormat": "Connections"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "values": false,
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": ""
+        },
+        "textMode": "value",
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "center",
+        "wideLayout": true,
+        "graph": {}
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 100
+              },
+              {
+                "color": "red",
+                "value": 1000
+              }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Unique Attackers",
+      "description": "Distinct source IPs that hit the chosen service.",
+      "id": 2,
+      "gridPos": {
+        "x": 6,
+        "y": 1,
+        "w": 6,
+        "h": 4
+      },
+      "datasource": {
+        "type": "loki",
+        "uid": "bfrvx638cgpa8d"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "count(sum by (src_ip) (count_over_time({job=~\"cowrie|dionaea\", service=~\"${service}\"} | json | eventid=~\"cowrie.session.connect|dionaea.connection.accept\" | src_ip!=\"\" [$__range])))",
+          "queryType": "instant",
+          "datasource": {
+            "type": "loki",
+            "uid": "bfrvx638cgpa8d"
+          },
+          "instant": true,
+          "legendFormat": "Attackers"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "values": false,
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": ""
+        },
+        "textMode": "value",
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "center",
+        "wideLayout": true,
+        "graph": {}
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 10
+              },
+              {
+                "color": "red",
+                "value": 50
+              }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Active Services",
+      "description": "Number of distinct honeypot services that received traffic.",
+      "id": 3,
+      "gridPos": {
+        "x": 12,
+        "y": 1,
+        "w": 6,
+        "h": 4
+      },
+      "datasource": {
+        "type": "loki",
+        "uid": "bfrvx638cgpa8d"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "count(count by (service) (count_over_time({job=~\"cowrie|dionaea\", service!=\"\"} | json | eventid=~\"cowrie.session.connect|dionaea.connection.accept\" [$__range])))",
+          "queryType": "instant",
+          "datasource": {
+            "type": "loki",
+            "uid": "bfrvx638cgpa8d"
+          },
+          "instant": true,
+          "legendFormat": "Services"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "values": false,
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": ""
+        },
+        "textMode": "value",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "wideLayout": true,
+        "graph": {}
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 5
+              },
+              {
+                "color": "red",
+                "value": 10
+              }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Honeypots Reporting",
+      "description": "Number of honeypot backends (cowrie + dionaea) currently streaming.",
+      "id": 4,
+      "gridPos": {
+        "x": 18,
+        "y": 1,
+        "w": 6,
+        "h": 4
+      },
+      "datasource": {
+        "type": "loki",
+        "uid": "bfrvx638cgpa8d"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "count(count by (job) (count_over_time({job=~\"cowrie|dionaea\"} [$__range])))",
+          "queryType": "instant",
+          "datasource": {
+            "type": "loki",
+            "uid": "bfrvx638cgpa8d"
+          },
+          "instant": true,
+          "legendFormat": "Honeypots"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "values": false,
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": ""
+        },
+        "textMode": "value",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "wideLayout": true,
+        "graph": {}
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 1
+              },
+              {
+                "color": "green",
+                "value": 2
+              }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "row",
+      "title": "Service Breakdown",
+      "id": 110,
+      "collapsed": false,
+      "gridPos": {
+        "x": 0,
+        "y": 5,
+        "w": 24,
+        "h": 1
+      },
+      "panels": []
+    },
+    {
+      "type": "bargauge",
+      "title": "Connections by Service",
+      "description": "Total accepted connections per honeypot service in the selected time range.",
+      "id": 10,
+      "gridPos": {
+        "x": 0,
+        "y": 6,
+        "w": 12,
+        "h": 9
+      },
+      "datasource": {
+        "type": "loki",
+        "uid": "bfrvx638cgpa8d"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "topk(20, sum by (service) (count_over_time({job=~\"cowrie|dionaea\", service!=\"\"} | json | eventid=~\"cowrie.session.connect|dionaea.connection.accept\" [$__range])))",
+          "queryType": "instant",
+          "datasource": {
+            "type": "loki",
+            "uid": "bfrvx638cgpa8d"
+          },
+          "instant": true,
+          "legendFormat": "{{service}}"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "values": false,
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": ""
+        },
+        "orientation": "horizontal",
+        "displayMode": "gradient",
+        "showUnfilled": true,
+        "valueMode": "color"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 100
+              },
+              {
+                "color": "red",
+                "value": 1000
+              }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "Connection Activity Over Time by Service",
+      "description": "Connections per service over time. Use the service variable above to filter to a single service.",
+      "id": 11,
+      "gridPos": {
+        "x": 12,
+        "y": 6,
+        "w": 12,
+        "h": 9
+      },
+      "datasource": {
+        "type": "loki",
+        "uid": "bfrvx638cgpa8d"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (service) (count_over_time({job=~\"cowrie|dionaea\", service=~\"${service}\"} | json | eventid=~\"cowrie.session.connect|dionaea.connection.accept\" [$__interval]))",
+          "queryType": "range",
+          "datasource": {
+            "type": "loki",
+            "uid": "bfrvx638cgpa8d"
+          },
+          "legendFormat": "{{service}}"
+        }
+      ],
+      "options": {
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        },
+        "legend": {
+          "displayMode": "table",
+          "placement": "right",
+          "calcs": [
+            "last",
+            "max",
+            "sum"
+          ]
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "fillOpacity": 10,
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "mode": "none"
+            }
+          },
+          "color": {
+            "mode": "palette-classic"
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "row",
+      "title": "Attackers",
+      "id": 120,
+      "collapsed": false,
+      "gridPos": {
+        "x": 0,
+        "y": 15,
+        "w": 24,
+        "h": 1
+      },
+      "panels": []
+    },
+    {
+      "type": "bargauge",
+      "title": "Top Source IPs (selected service)",
+      "description": "Source IPs hitting the chosen service, ranked by connection count.",
+      "id": 20,
+      "gridPos": {
+        "x": 0,
+        "y": 16,
+        "w": 12,
+        "h": 10
+      },
+      "datasource": {
+        "type": "loki",
+        "uid": "bfrvx638cgpa8d"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "topk(15, sum by (src_ip) (count_over_time({job=~\"cowrie|dionaea\", service=~\"${service}\"} | json | eventid=~\"cowrie.session.connect|dionaea.connection.accept\" | src_ip!=\"\" [$__range])))",
+          "queryType": "instant",
+          "datasource": {
+            "type": "loki",
+            "uid": "bfrvx638cgpa8d"
+          },
+          "instant": true,
+          "legendFormat": "{{src_ip}}"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "values": false,
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": ""
+        },
+        "orientation": "horizontal",
+        "displayMode": "gradient",
+        "showUnfilled": true,
+        "valueMode": "color"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 50
+              },
+              {
+                "color": "red",
+                "value": 200
+              }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "bargauge",
+      "title": "Most Diverse Attackers (multiple services)",
+      "description": "Source IPs that probed the largest number of distinct services. A high count here suggests scanning/recon behavior.",
+      "id": 21,
+      "gridPos": {
+        "x": 12,
+        "y": 16,
+        "w": 12,
+        "h": 10
+      },
+      "datasource": {
+        "type": "loki",
+        "uid": "bfrvx638cgpa8d"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "topk(15, count by (src_ip) (count by (src_ip, service) (count_over_time({job=~\"cowrie|dionaea\", service!=\"\"} | json | eventid=~\"cowrie.session.connect|dionaea.connection.accept\" | src_ip!=\"\" [$__range]))))",
+          "queryType": "instant",
+          "datasource": {
+            "type": "loki",
+            "uid": "bfrvx638cgpa8d"
+          },
+          "instant": true,
+          "legendFormat": "{{src_ip}}"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "values": false,
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": ""
+        },
+        "orientation": "horizontal",
+        "displayMode": "gradient",
+        "showUnfilled": true,
+        "valueMode": "color"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 3
+              },
+              {
+                "color": "red",
+                "value": 5
+              }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "row",
+      "title": "Recent Activity",
+      "id": 130,
+      "collapsed": false,
+      "gridPos": {
+        "x": 0,
+        "y": 26,
+        "w": 24,
+        "h": 1
+      },
+      "panels": []
+    },
+    {
+      "type": "logs",
+      "title": "Latest Connection Events",
+      "description": "Most recent accepted connections for the selected service.",
+      "id": 30,
+      "gridPos": {
+        "x": 0,
+        "y": 27,
+        "w": 24,
+        "h": 12
+      },
+      "datasource": {
+        "type": "loki",
+        "uid": "bfrvx638cgpa8d"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "{job=~\"cowrie|dionaea\", service=~\"${service}\"} | json | eventid=~\"cowrie.session.connect|dionaea.connection.accept\" | line_format \"service={{.service}}  src={{.src_ip}}:{{.src_port}}  dst={{.dst_ip}}:{{.dst_port}}  event={{.eventid}}\"",
+          "queryType": "range",
+          "datasource": {
+            "type": "loki",
+            "uid": "bfrvx638cgpa8d"
+          }
+        }
+      ],
+      "options": {
+        "showTime": true,
+        "showLabels": false,
+        "showCommonLabels": false,
+        "wrapLogMessage": true,
+        "prettifyLogMessage": false,
+        "enableLogDetails": true,
+        "dedupStrategy": "none",
+        "sortOrder": "Descending"
+      },
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      }
+    },
+    {
+      "datasource": {
+        "type": "loki",
+        "uid": "bfrvx638cgpa8d"
+      },
+      "description": "Protocol mix of inbound Dionaea connection events.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "continuous-GrYlRd"
+          },
+          "custom": {
+            "neutral": 0
+          },
+          "min": 0,
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 12,
+        "x": 0,
+        "y": 48
+      },
+      "id": 41,
+      "options": {
+        "displayMode": "gradient",
+        "minVizHeight": 12,
+        "minVizWidth": 8,
+        "namePlacement": "left",
+        "orientation": "horizontal",
+        "showUnfilled": false,
+        "valueDisplayMode": "text",
+        "valueMode": "text"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "bfrvx638cgpa8d"
+          },
+          "expr": "topk(10, sum by (connection_protocol) (count_over_time({job=\"dionaea\"} | json | __error__=\"\" | connection_protocol!=\"\" [$__range])))",
+          "instant": true,
+          "legendFormat": "{{connection_protocol}}",
+          "queryType": "instant",
+          "refId": "A"
+        }
+      ],
+      "title": "Dionaea Protocols",
+      "type": "bargauge"
+    },
+    {
+      "datasource": {
+        "type": "loki",
+        "uid": "bfrvx638cgpa8d"
+      },
+      "description": "Most active source IPs hitting Dionaea services.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "continuous-GrYlRd"
+          },
+          "custom": {
+            "neutral": 0
+          },
+          "min": 0,
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 12,
+        "x": 12,
+        "y": 40
+      },
+      "id": 43,
+      "options": {
+        "displayMode": "gradient",
+        "minVizHeight": 10,
+        "minVizWidth": 8,
+        "namePlacement": "left",
+        "orientation": "horizontal",
+        "showUnfilled": false,
+        "valueDisplayMode": "text",
+        "valueMode": "text"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "bfrvx638cgpa8d"
+          },
+          "expr": "topk(10, sum by (src_ip) (count_over_time({job=\"ai-orchestrator\", source=\"raw\"} | json | event_type=\"dionaea_event\" | eventid=\"dionaea.connection.aggregated\" | src_ip!=\"\" [24h])))",
+          "instant": true,
+          "legendFormat": "{{src_ip}}",
+          "queryType": "instant",
+          "refId": "A"
+        }
+      ],
+      "title": "Top Dionaea IPs",
+      "type": "bargauge"
+    }
+  ],
+  "schemaVersion": 39,
+  "tags": [
+    "honeypot",
+    "ports",
+    "loki"
+  ],
+  "templating": {
+    "list": [
+      {
+        "name": "service",
+        "label": "Service",
+        "type": "custom",
+        "description": "Filter panels by honeypot service (ssh, smb, http, etc.).",
+        "query": "All Services : .*,SSH : ssh,Telnet : telnet,SMB : smb,HTTP : http,FTP : ftp,MySQL : mysql,MSSQL : mssql,MQTT : mqtt,SIP : sip,Redis : redis,MongoDB : mongodb,Memcached : memcached,UPnP : upnp,HTTPS : https,Other : other",
+        "current": {
+          "text": "All Services",
+          "value": ".*"
+        },
+        "options": [
+          {
+            "text": "All Services",
+            "value": ".*",
+            "selected": true
+          },
+          {
+            "text": "SSH",
+            "value": "ssh",
+            "selected": false
+          },
+          {
+            "text": "Telnet",
+            "value": "telnet",
+            "selected": false
+          },
+          {
+            "text": "SMB",
+            "value": "smb",
+            "selected": false
+          },
+          {
+            "text": "HTTP",
+            "value": "http",
+            "selected": false
+          },
+          {
+            "text": "FTP",
+            "value": "ftp",
+            "selected": false
+          },
+          {
+            "text": "MySQL",
+            "value": "mysql",
+            "selected": false
+          },
+          {
+            "text": "MSSQL",
+            "value": "mssql",
+            "selected": false
+          },
+          {
+            "text": "MQTT",
+            "value": "mqtt",
+            "selected": false
+          },
+          {
+            "text": "SIP",
+            "value": "sip",
+            "selected": false
+          },
+          {
+            "text": "Redis",
+            "value": "redis",
+            "selected": false
+          },
+          {
+            "text": "MongoDB",
+            "value": "mongodb",
+            "selected": false
+          },
+          {
+            "text": "Memcached",
+            "value": "memcached",
+            "selected": false
+          },
+          {
+            "text": "UPnP",
+            "value": "upnp",
+            "selected": false
+          },
+          {
+            "text": "HTTPS",
+            "value": "https",
+            "selected": false
+          },
+          {
+            "text": "Other",
+            "value": "other",
+            "selected": false
+          }
+        ],
+        "includeAll": false,
+        "multi": false,
+        "hide": 0,
+        "skipUrlSync": false
+      },
+      {
+        "name": "job",
+        "label": "Service",
+        "type": "custom",
+        "query": "cowrie, dionaea, ai-orchestrator, .+",
+        "options": [
+          {
+            "text": "cowrie",
+            "value": "cowrie",
+            "selected": true
+          },
+          {
+            "text": "dionaea",
+            "value": "dionaea",
+            "selected": false
+          },
+          {
+            "text": "ai-orchestrator",
+            "value": "ai-orchestrator",
+            "selected": false
+          },
+          {
+            "text": "All services",
+            "value": ".+",
+            "selected": false
+          }
+        ],
+        "current": {
+          "text": "cowrie",
+          "value": "cowrie",
+          "selected": true
+        },
+        "hide": 0,
+        "skipUrlSync": false,
+        "multi": false,
+        "includeAll": false,
+        "regex": "",
+        "allValue": null
+      }
+    ]
+  },
+  "time": {
+    "from": "now-24h",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "Honeypot Service Activity",
+  "uid": "honeypot-ports",
+  "version": 3,
+  "weekStart": "",
+  "refresh": "30s",
+  "fiscalYearStartMonth": 0,
+  "liveNow": true
+}

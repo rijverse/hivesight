@@ -1,0 +1,527 @@
+{
+  "annotations": {
+    "list": []
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "links": [
+    {
+      "asDropdown": false,
+      "icon": "external link",
+      "includeVars": false,
+      "keepTime": true,
+      "tags": [],
+      "targetBlank": false,
+      "title": "Honeypot Threat Overview",
+      "type": "link",
+      "url": "/d/honeypot-overview/"
+    },
+    {
+      "asDropdown": false,
+      "icon": "external link",
+      "includeVars": false,
+      "keepTime": true,
+      "tags": [],
+      "targetBlank": false,
+      "title": "Attackers",
+      "type": "link",
+      "url": "/d/honeypot-attackers/"
+    },
+    {
+      "asDropdown": false,
+      "icon": "external link",
+      "includeVars": false,
+      "keepTime": true,
+      "tags": [],
+      "targetBlank": false,
+      "title": "Credentials",
+      "type": "link",
+      "url": "/d/honeypot-credentials/"
+    },
+    {
+      "asDropdown": false,
+      "icon": "external link",
+      "includeVars": false,
+      "keepTime": true,
+      "tags": [],
+      "targetBlank": false,
+      "title": "AI & Malware Defense",
+      "type": "link",
+      "url": "/d/honeypot-ai-malware/"
+    },
+    {
+      "asDropdown": false,
+      "icon": "external link",
+      "includeVars": false,
+      "keepTime": true,
+      "tags": [],
+      "targetBlank": false,
+      "title": "Honeypot Service Activity",
+      "type": "link",
+      "url": "/d/honeypot-ports/"
+    }
+  ],
+  "liveNow": true,
+  "panels": [
+    {
+      "type": "row",
+      "title": "Login Attempts (AuthRandom)",
+      "id": 200,
+      "collapsed": false,
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 24,
+        "h": 1
+      },
+      "panels": []
+    },
+    {
+      "type": "table",
+      "title": "Login Attempts Breakdown (selected range)",
+      "description": "Per-source login counts and the failed-to-success ratio over the selected time range. Failed count is high while AuthRandom is freshly seeded; once attackers get cached, success count climbs and the ratio trends higher than the 3-5 initial random attempts.",
+      "id": 70,
+      "gridPos": {
+        "x": 0,
+        "y": 2,
+        "w": 12,
+        "h": 5
+      },
+      "datasource": {
+        "type": "loki",
+        "uid": "bfrvx638cgpa8d"
+      },
+      "targets": [
+        {
+          "refId": "F",
+          "expr": "sum(count_over_time({job=\"cowrie\", eventid=\"cowrie.login.failed\"}[$__range]))",
+          "queryType": "instant",
+          "instant": true,
+          "datasource": {
+            "type": "loki",
+            "uid": "bfrvx638cgpa8d"
+          },
+          "legendFormat": "Failed logins"
+        },
+        {
+          "refId": "S",
+          "expr": "sum(count_over_time({job=\"cowrie\", eventid=\"cowrie.login.success\"}[$__range]))",
+          "queryType": "instant",
+          "instant": true,
+          "datasource": {
+            "type": "loki",
+            "uid": "bfrvx638cgpa8d"
+          },
+          "legendFormat": "Successful logins"
+        },
+        {
+          "refId": "R",
+          "expr": "(sum(count_over_time({job=\"cowrie\", eventid=\"cowrie.login.failed\"}[$__range]))) / (sum(count_over_time({job=\"cowrie\", eventid=\"cowrie.login.success\"}[$__range])))",
+          "queryType": "instant",
+          "instant": true,
+          "datasource": {
+            "type": "loki",
+            "uid": "bfrvx638cgpa8d"
+          },
+          "legendFormat": "Ratio (failed \u00f7 success)"
+        }
+      ],
+      "transformations": [
+        {
+          "id": "seriesToColumns",
+          "options": {
+            "byField": "Time"
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true
+            }
+          }
+        }
+      ],
+      "options": {
+        "showHeader": true,
+        "sortBy": [],
+        "sortOrder": "asc",
+        "footer": {
+          "show": false,
+          "reducer": [
+            "sum"
+          ]
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "width": 160,
+            "minWidth": 80
+          },
+          "unit": "none"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Failed logins"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "short"
+              },
+              {
+                "id": "decimals",
+                "value": 0
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "value": null,
+                      "color": "green"
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Successful logins"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "short"
+              },
+              {
+                "id": "decimals",
+                "value": 0
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "value": null,
+                      "color": "blue"
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Ratio (failed \u00f7 success)"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "none"
+              },
+              {
+                "id": "decimals",
+                "value": 2
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "value": null,
+                      "color": "red"
+                    },
+                    {
+                      "value": 1,
+                      "color": "yellow"
+                    },
+                    {
+                      "value": 2,
+                      "color": "green"
+                    },
+                    {
+                      "value": 5,
+                      "color": "blue"
+                    },
+                    {
+                      "value": 15,
+                      "color": "red"
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "type": "table",
+      "title": "Attempts per Attacker (selected range)",
+      "description": "Per-IP failed/successful login counts and the ratio. Sorted by attempts-per-success descending so the most 'pushed-around' attackers (often scanners / spray-and-pray bots) surface first.",
+      "id": 71,
+      "gridPos": {
+        "x": 12,
+        "y": 2,
+        "w": 12,
+        "h": 10
+      },
+      "datasource": {
+        "type": "loki",
+        "uid": "bfrvx638cgpa8d"
+      },
+      "targets": [
+        {
+          "refId": "F",
+          "expr": "topk(20, sum by (src_ip) (count_over_time({job=\"cowrie\", eventid=\"cowrie.login.failed\"} | json | __error__=\"\" | src_ip!=\"\" [$__range])))",
+          "queryType": "instant",
+          "instant": true,
+          "datasource": {
+            "type": "loki",
+            "uid": "bfrvx638cgpa8d"
+          },
+          "legendFormat": "Failed"
+        },
+        {
+          "refId": "S",
+          "expr": "topk(20, sum by (src_ip) (count_over_time({job=\"cowrie\", eventid=\"cowrie.login.success\"} | json | __error__=\"\" | src_ip!=\"\" [$__range])))",
+          "queryType": "instant",
+          "instant": true,
+          "datasource": {
+            "type": "loki",
+            "uid": "bfrvx638cgpa8d"
+          },
+          "legendFormat": "Successful"
+        },
+        {
+          "refId": "R",
+          "expr": "(topk(20, sum by (src_ip) (count_over_time({job=\"cowrie\", eventid=\"cowrie.login.failed\"} | json | __error__=\"\" | src_ip!=\"\" [$__range])))) / (topk(20, sum by (src_ip) (count_over_time({job=\"cowrie\", eventid=\"cowrie.login.success\"} | json | __error__=\"\" | src_ip!=\"\" [$__range]))))",
+          "queryType": "instant",
+          "instant": true,
+          "datasource": {
+            "type": "loki",
+            "uid": "bfrvx638cgpa8d"
+          },
+          "legendFormat": "Ratio"
+        }
+      ],
+      "transformations": [
+        {
+          "id": "seriesToColumns",
+          "options": {
+            "byField": "src_ip"
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true,
+              "Time 1": true,
+              "Time 2": true,
+              "Time 3": true
+            }
+          }
+        }
+      ],
+      "options": {
+        "showHeader": true,
+        "sortBy": [
+          {
+            "displayName": "Ratio",
+            "desc": true
+          }
+        ],
+        "sortOrder": "desc",
+        "footer": {
+          "show": false,
+          "reducer": [
+            "sum"
+          ]
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "width": 120,
+            "minWidth": 60
+          },
+          "unit": "short"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "src_ip"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 160
+              },
+              {
+                "id": "custom.filterable",
+                "value": true
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "^(Failed|Value #F)$"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Failed"
+              },
+              {
+                "id": "unit",
+                "value": "short"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "^(Successful|Value #S)$"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Successful"
+              },
+              {
+                "id": "unit",
+                "value": "short"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "^(Ratio|Value #R)$"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Ratio"
+              },
+              {
+                "id": "unit",
+                "value": "none"
+              },
+              {
+                "id": "decimals",
+                "value": 2
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "value": null,
+                      "color": "red"
+                    },
+                    {
+                      "value": 1,
+                      "color": "yellow"
+                    },
+                    {
+                      "value": 2,
+                      "color": "green"
+                    },
+                    {
+                      "value": 5,
+                      "color": "blue"
+                    },
+                    {
+                      "value": 15,
+                      "color": "red"
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ],
+  "refresh": "30s",
+  "schemaVersion": 39,
+  "tags": [
+    "honeypot",
+    "cowrie",
+    "ssh",
+    "ai",
+    "loki"
+  ],
+  "templating": {
+    "list": [
+      {
+        "name": "job",
+        "label": "Service",
+        "type": "custom",
+        "query": "cowrie, dionaea, ai-orchestrator, .+",
+        "options": [
+          {
+            "text": "cowrie",
+            "value": "cowrie",
+            "selected": true
+          },
+          {
+            "text": "dionaea",
+            "value": "dionaea",
+            "selected": false
+          },
+          {
+            "text": "ai-orchestrator",
+            "value": "ai-orchestrator",
+            "selected": false
+          },
+          {
+            "text": "All services",
+            "value": ".+",
+            "selected": false
+          }
+        ],
+        "current": {
+          "text": "cowrie",
+          "value": "cowrie",
+          "selected": true
+        },
+        "hide": 0,
+        "skipUrlSync": false,
+        "multi": false,
+        "includeAll": false,
+        "regex": "",
+        "allValue": null
+      }
+    ]
+  },
+  "time": {
+    "from": "now-7d",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "SSH Login Behavior",
+  "uid": "honeypot-ssh-behavior",
+  "version": 2,
+  "weekStart": ""
+}
