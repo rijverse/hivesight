@@ -5,11 +5,12 @@
 # Stop:         sudo ./bin/up.sh --stop
 # Full reset:   sudo ./bin/up.sh --reset   (destroys all data volumes)
 #
-# Ports bound to the host (must be free):
+# Ports bound to the host by the bundles you enable (must be free):
 #   22 (cowrie SSH), 23 (cowrie Telnet), 21 (FTP), 80, 443, 445, 1433,
 #   1883, 3306, 5060, 5061, 6379, 8081, 11211, 27017 (dionaea),
 #   3000 (grafana, bound to 127.0.0.1 only).
-# If you have an SSH server on the host, stop it or change cowrie's port.
+# If you have an SSH server on the host, set COWRIE_SSH_PORT in .env (or skip
+# the cowrie bundle). See .env.example.
 
 # Pin the project name so networks/volumes are hivesight_* regardless of
 # the checkout directory name (egress-block.sh relies on this).
@@ -19,9 +20,13 @@ services:
   cowrie:
     image: cowrie/cowrie@sha256:b4817f185e522f5a66975568ff304ae02c042b65454c2542918f42dbaf1b31fa
     container_name: cowrie
+    profiles: ["cowrie"]
     ports:
-      - "22:2222"
-      - "23:2223"
+      # Host ports default to the real 22/23 (what a live honeypot wants). On a
+      # workstation that already runs sshd, set COWRIE_SSH_PORT/COWRIE_TELNET_PORT
+      # in .env so cowrie doesn't collide with it.
+      - "${COWRIE_SSH_PORT:-22}:2222"
+      - "${COWRIE_TELNET_PORT:-23}:2223"
     volumes:
       # Operator config overlay: makes cowrie use AuthRandom instead of the
       # default UserDB. Requires AuthRandom's per-IP state to persist across
@@ -47,6 +52,7 @@ services:
   dionaea:
     image: dinotools/dionaea@sha256:6f06d0a6035c865cb60ef51bd96ff3b1f25ee4bfcd852dad3f551bc2d93464ca
     container_name: dionaea
+    profiles: ["dionaea"]
     ports:
       # Classic
       - "21:21"      # FTP
@@ -81,6 +87,9 @@ services:
   loki:
     image: grafana/loki@sha256:70b9f699fc9bb868b62f1cfd4f787dfa50242f1fd92e6089787d5d7daea75fe8
     container_name: loki
+    # Part of both bundles: the Grafana stack queries it and the AI
+    # orchestrator pushes enriched events to it, so either one pulls loki in.
+    profiles: ["logging", "ai"]
     command: -config.file=/etc/loki/local-config.yaml
     networks:
       - backend
@@ -105,6 +114,7 @@ services:
     # no events ever fire — see /tmp/dionaea-img for analysis.
     image: python:3.11-alpine
     container_name: dionaea-sqlite-pump
+    profiles: ["dionaea"]
     command: ["python3", "-u", "/opt/dionaea-sqlite-pump.py"]
     volumes:
       - ./dionaea-sqlite-pump.py:/opt/dionaea-sqlite-pump.py:ro
@@ -128,6 +138,7 @@ services:
   promtail:
     image: grafana/promtail@sha256:6cfa64ec432b24a912d640e2edb940eeae2666f61861a66c121d763dd7241381
     container_name: promtail
+    profiles: ["logging"]
     command: -config.file=/etc/promtail/config.yml
     # Reads the honeypot log volumes directly; only needs backend for Loki.
     networks:
@@ -153,6 +164,7 @@ services:
   grafana:
     image: grafana/grafana@sha256:121a7a9ece6dc10b969f1f96eed64b4f07dfac0d0b8abc070f7cb83bbde86f63
     container_name: grafana
+    profiles: ["logging"]
     ports:
       # Loopback only. This host is deliberately attacked; never expose the
       # dashboard on the same interfaces as the honeypots. Use an SSH tunnel
