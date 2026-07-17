@@ -24,7 +24,11 @@ cd "$ROOT"
 
 # Load .env so the port values below match what compose will actually bind.
 if [[ -f .env ]]; then
-    set -a; . ./.env; set +a
+    set -a
+    # optional runtime file, not present at lint time
+    # shellcheck disable=SC1091
+    . ./.env
+    set +a
 fi
 
 ALL_BUNDLES=(cowrie dionaea logging ai)
