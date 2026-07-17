@@ -10,36 +10,66 @@ results back to Loki with per-country geo enrichment.
 
 ## Quick start
 
+The stack is split into four bundles you can mix and match:
+
+- `cowrie` - SSH/Telnet honeypot
+- `dionaea` - multi-protocol honeypot (FTP, HTTP, SMB, MySQL, Redis, Mongo, ...)
+- `logging` - Loki + Promtail + Grafana dashboards
+- `ai` - local-LLM triage + ClamAV malware scanning (~4 GB RAM)
+
 ```
-sudo ./bin/up.sh          # start everything
-sudo ./bin/up.sh --stop   # stop
-sudo ./bin/up.sh --reset  # stop and destroy all data volumes
+sudo ./bin/up.sh                     # pick bundles interactively, then start
+sudo ./bin/up.sh --all               # start every bundle
+sudo ./bin/up.sh --cowrie --logging  # start only the named bundles
+sudo ./bin/up.sh --pull --all        # pull images first, then start
+sudo ./bin/up.sh --stop              # stop and remove containers
+sudo ./bin/up.sh --reset             # stop + destroy all data volumes
 ```
+
+The bundles are independent: `logging` and `ai` run fine with no honeypot (the
+dashboards are just empty and the orchestrator has nothing to triage), and a
+honeypot runs fine without them. `ai` and `logging` publish no attack surface,
+so `./bin/up.sh --logging --ai` needs no free ports beyond Grafana's loopback
+3000 and no root.
 
 Grafana lives at http://localhost:3000 (admin / admin unless you set
 `GRAFANA_ADMIN_PASSWORD` in a `.env` file). The port is bound to loopback
 only. For remote access use an SSH tunnel, never expose it on the honeypot
 interface.
 
+## Running on a workstation
+
+This is built for a dedicated, internet-facing host, but it runs locally if
+you keep it closed: don't port-forward it, and pick only the bundles you
+want. The one guaranteed clash on a desktop is cowrie's port 22 fighting your
+real sshd, so copy `.env.example` to `.env` and set `COWRIE_SSH_PORT` /
+`COWRIE_TELNET_PORT` (e.g. 2222/2223). Dionaea publishes a dozen fake services
+on all interfaces by design; skip that bundle if you'd rather not.
+
 ## Host ports
 
-Cowrie takes 22 (SSH) and 23 (Telnet), so move the real sshd first.
-Dionaea takes 21, 80, 443, 445, 1433, 1883, 3306, 5060, 5061, 6379, 8081,
-11211 and 27017.
+Cowrie takes 22 (SSH) and 23 (Telnet) by default; override with
+`COWRIE_SSH_PORT` / `COWRIE_TELNET_PORT` in `.env`. Dionaea takes 21, 80, 443,
+445, 1433, 1883, 3306, 5060, 5061, 6379, 8081, 11211 and 27017.
 
 ## Egress blocking
 
-`bin/up.sh` installs iptables rules (in the DOCKER-USER chain, see
-`egress-block.sh`) so honeypot containers can answer inbound connections
-and reach the log backend but cannot initiate anything toward the
-internet. Re-run `sudo ./egress-block.sh` after a docker daemon restart.
+When a honeypot bundle is running, `bin/up.sh` installs iptables rules (in the
+DOCKER-USER chain, see `egress-block.sh`) so honeypot containers can answer
+inbound connections and reach the log backend but cannot initiate anything
+toward the internet. `--stop` and `--reset` remove the rules again. Re-run
+`sudo ./egress-block.sh` after a docker daemon restart.
 
 ## Layout
 
 - `docker-compose.yml` - honeypots + logging (cowrie, dionaea, loki,
   promtail, grafana, sqlite pump)
 - `docker-compose-ai-av.yml` - AI/AV layer (ollama, clamav, orchestrator).
-  Always used together with the base file.
+  Both files are always passed to compose; which services actually start is
+  decided by Compose profiles (`cowrie`, `dionaea`, `logging`, `ai`) that
+  `bin/up.sh` selects from your flags or the menu.
+- `.env.example` - copy to `.env` to set cowrie's ports and the Grafana
+  password (`.env` is gitignored).
 - `orchestrator.py` - tails both honeypot logs, calls Ollama per command,
   drives ClamAV scans of captured binaries, pushes events to Loki
 - `dionaea-sqlite-pump.py` - tails dionaea.sqlite and rewrites rows as JSON
