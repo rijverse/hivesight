@@ -221,7 +221,7 @@
             "type": "loki",
             "uid": "bfrvx638cgpa8d"
           },
-          "expr": "sum(count_over_time({job=~\"$job\", source=\"qwen-llm\"}[$__range]))",
+          "expr": "sum(count_over_time({job=\"ai-orchestrator\", source=\"qwen-llm\"}[$__range]))",
           "legendFormat": "AI Analyses",
           "queryType": "range",
           "refId": "A"
@@ -587,7 +587,7 @@
             "type": "loki",
             "uid": "bfrvx638cgpa8d"
           },
-          "expr": "sum(count_over_time({job=~\"$job\", source=\"clamav\"} | json | event_type=\"malware_scan\" [$__range]))",
+          "expr": "sum(count_over_time({job=\"ai-orchestrator\", source=\"clamav\"} | json | event_type=\"malware_scan\" [$__range]))",
           "legendFormat": "Total Scans",
           "queryType": "range",
           "refId": "A"
@@ -655,7 +655,7 @@
             "type": "loki",
             "uid": "bfrvx638cgpa8d"
           },
-          "expr": "max(max_over_time({job=~\"$job\", source=\"orchestrator\"} | json | event_type=\"orchestrator_heartbeat\" | unwrap queued [$__range]))",
+          "expr": "max(max_over_time({job=\"ai-orchestrator\", source=\"orchestrator\"} | json | event_type=\"orchestrator_heartbeat\" | unwrap queued [$__range]))",
           "legendFormat": "Queue Depth",
           "queryType": "range",
           "refId": "A"
@@ -723,7 +723,7 @@
             "type": "loki",
             "uid": "bfrvx638cgpa8d"
           },
-          "expr": "max(max_over_time({job=~\"$job\", source=\"orchestrator\"} | json | event_type=\"orchestrator_heartbeat\" | unwrap loki_drops [$__range]))",
+          "expr": "max(max_over_time({job=\"ai-orchestrator\", source=\"orchestrator\"} | json | event_type=\"orchestrator_heartbeat\" | unwrap loki_drops [$__range]))",
           "legendFormat": "Loki Drops",
           "queryType": "range",
           "refId": "A"
@@ -860,7 +860,7 @@
             "type": "loki",
             "uid": "bfrvx638cgpa8d"
           },
-          "expr": "topk(50, sum by (country, lat, lon) (count_over_time({job=~\"$job\", source=\"raw\", country!=\"\", country!=\"XX\"} | json | __error__=\"\" [$__range])))",
+          "expr": "topk(50, sum by (country, lat, lon) (count_over_time({job=\"ai-orchestrator\", source=\"raw\", country!=\"\", country!=\"XX\"} | json | __error__=\"\" [$__range])))",
           "instant": false,
           "legendFormat": "connections",
           "queryType": "range",

@@ -153,7 +153,7 @@
             "type": "loki",
             "uid": "bfrvx638cgpa8d"
           },
-          "expr": "{job=~\"$job\", source=\"qwen-llm\"} | json | event_type=\"ai_threat_analysis\" | line_format \"[AI {{.category}}|{{.severity}}] {{.src_ip}}: {{.summary}} ({{.attacker_command}})\"",
+          "expr": "{job=\"ai-orchestrator\", source=\"qwen-llm\"} | json | event_type=\"ai_threat_analysis\" | line_format \"[AI {{.category}}|{{.severity}}] {{.src_ip}}: {{.summary}} ({{.attacker_command}})\"",
           "queryType": "range",
           "refId": "B"
         }
