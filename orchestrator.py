@@ -62,6 +62,16 @@ SENTINEL_CLOSE = "<<<UNTRUSTED_ATTACKER_INPUT_END>>>"
 
 SOURCE_HOST = socket.gethostname()
 
+# Keep your own test traffic out of the stats. EXCLUDE_IP_REGEX is an anchored
+# regex (set in .env), matched against src_ip for both cowrie and dionaea
+# events (dionaea's src_ip is the remote host). Unset means record everything.
+_exclude_pat = os.environ.get("EXCLUDE_IP_REGEX", "").strip()
+try:
+    EXCLUDE_IP_RE = re.compile(_exclude_pat) if _exclude_pat else None
+except re.error as e:
+    print(f"[!] invalid EXCLUDE_IP_REGEX, ignoring: {e}")
+    EXCLUDE_IP_RE = None
+
 STOP = threading.Event()
 STATS = {
     "queued": 0,
@@ -721,6 +731,10 @@ def dionaea_agg_loop() -> None:
 
 
 def process_event(event: dict, q: "queue.Queue[dict]") -> None:
+    if EXCLUDE_IP_RE is not None:
+        src = event.get("src_ip") or ""
+        if src and EXCLUDE_IP_RE.search(src):
+            return
     eid = event.get("eventid")
     # Identify the source: cowrie events have a non-empty "eventid"; dionaea
     # connection events have empty eventid but a "connection" object. Either

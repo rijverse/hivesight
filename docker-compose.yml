@@ -139,7 +139,12 @@ services:
     image: grafana/promtail@sha256:6cfa64ec432b24a912d640e2edb940eeae2666f61861a66c121d763dd7241381
     container_name: promtail
     profiles: ["logging"]
-    command: -config.file=/etc/promtail/config.yml
+    command: -config.file=/etc/promtail/config.yml -config.expand-env=true
+    environment:
+      # Substituted into the drop stages in promtail-config.yml via
+      # config.expand-env. Defaults to a bogus IP that matches nothing, so the
+      # filter is a no-op until you set EXCLUDE_IP_REGEX in .env.
+      - EXCLUDE_IP_REGEX=${EXCLUDE_IP_REGEX:-999.999.999.999}
     # Reads the honeypot log volumes directly; only needs backend for Loki.
     networks:
       - backend

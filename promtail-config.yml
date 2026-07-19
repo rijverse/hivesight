@@ -23,6 +23,15 @@ scrape_configs:
           expressions:
             eventid: eventid
             protocol: protocol
+            src_ip: src_ip
+      # Drop your own test traffic before it reaches Loki. EXCLUDE_IP_REGEX is
+      # expanded from the environment (config.expand-env, set on the promtail
+      # service) and defaults to a bogus IP that never matches. src_ip is
+      # extracted only for this test, not promoted to a label, so no new streams.
+      - drop:
+          source: src_ip
+          expression: "${EXCLUDE_IP_REGEX}"
+          drop_counter_reason: excluded_ip
       # Map cowrie's `protocol` JSON field (ssh|telnet) to a `service`
       # label. The regex extracts a `service` field, and the labels
       # stage promotes it as a Loki label.
@@ -52,6 +61,12 @@ scrape_configs:
           expressions:
             connection_protocol: connection_protocol
             protocol: protocol
+            src_ip: src_ip
+      # Same self-traffic filter as the cowrie job above.
+      - drop:
+          source: src_ip
+          expression: "${EXCLUDE_IP_REGEX}"
+          drop_counter_reason: excluded_ip
       # Map dionaea's `protocol` field (smbd, httpd, ftpd, mongodb,
       # SipSession, Memcache, etc.) to a canonical service name.
       - regex:

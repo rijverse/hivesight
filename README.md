@@ -69,8 +69,9 @@ toward the internet. `--stop` and `--reset` remove the rules again. Re-run
   Both files are always passed to compose; which services actually start is
   decided by Compose profiles (`cowrie`, `dionaea`, `logging`, `ai`) that
   `bin/up.sh` selects from your flags or the menu.
-- `.env.example` - copy to `.env` to set cowrie's ports and the Grafana
-  password (`.env` is gitignored).
+- `.env.example` - copy to `.env` to set cowrie's ports, the Grafana
+  password, and `EXCLUDE_IP_REGEX` to keep your own test traffic out of the
+  stats (`.env` is gitignored).
 - `orchestrator.py` - tails both honeypot logs, calls Ollama per command,
   drives ClamAV scans of captured binaries, pushes events to Loki
 - `dionaea-sqlite-pump.py` - tails dionaea.sqlite and rewrites rows as JSON
