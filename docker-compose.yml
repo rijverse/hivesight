@@ -166,18 +166,21 @@ services:
     container_name: grafana
     profiles: ["logging"]
     ports:
-      # Loopback only. This host is deliberately attacked; never expose the
-      # dashboard on the same interfaces as the honeypots. Use an SSH tunnel
-      # (ssh -L 3000:localhost:3000) for remote access.
-      - "127.0.0.1:3000:3000"
+      # Exposed on all interfaces for remote access. This host is deliberately
+      # attacked, so the dashboard shares that surface. Set a strong
+      # GRAFANA_ADMIN_PASSWORD and firewall the port to trusted sources.
+      - "0.0.0.0:3000:3000"
     environment:
       # Override with GRAFANA_ADMIN_PASSWORD in .env for anything beyond a
-      # throwaway lab. Anonymous viewer stays on for convenience since the
-      # port is loopback-only.
+      # throwaway lab. Anonymous access is off, so the admin login form is the
+      # only way in; keep DISABLE_LOGIN_FORM false or there's no way to sign in.
       - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-admin}
-      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_SECURITY_SECRET_KEY=${GRAFANA_SECRET_KEY:-}
+      - GF_AUTH_ANONYMOUS_ENABLED=false
       - GF_AUTH_ANONYMOUS_ORG_ROLE=Viewer
       - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_AUTH_DISABLE_LOGIN_FORM=false
+      - GF_AUTH_ANONYMOUS_HIDE_VERSION=true
     networks:
       - backend
     restart: unless-stopped
