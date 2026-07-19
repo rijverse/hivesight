@@ -62,9 +62,12 @@ SENTINEL_CLOSE = "<<<UNTRUSTED_ATTACKER_INPUT_END>>>"
 
 SOURCE_HOST = socket.gethostname()
 
-# Keep your own test traffic out of the stats. EXCLUDE_IP_REGEX is an anchored
-# regex (set in .env), matched against src_ip for both cowrie and dionaea
-# events (dionaea's src_ip is the remote host). Unset means record everything.
+# Keep your own test traffic out of the stats. EXCLUDE_IPS is a comma/space
+# separated list of exact IPs; EXCLUDE_IP_REGEX is an optional anchored regex
+# for anything the list can't express. Both are matched against src_ip for
+# cowrie and dionaea events (dionaea's src_ip is the remote host). Unset both
+# to record everything.
+EXCLUDE_IPS = {ip for ip in re.split(r"[,\s]+", os.environ.get("EXCLUDE_IPS", "").strip()) if ip}
 _exclude_pat = os.environ.get("EXCLUDE_IP_REGEX", "").strip()
 try:
     EXCLUDE_IP_RE = re.compile(_exclude_pat) if _exclude_pat else None
@@ -731,9 +734,9 @@ def dionaea_agg_loop() -> None:
 
 
 def process_event(event: dict, q: "queue.Queue[dict]") -> None:
-    if EXCLUDE_IP_RE is not None:
+    if EXCLUDE_IPS or EXCLUDE_IP_RE is not None:
         src = event.get("src_ip") or ""
-        if src and EXCLUDE_IP_RE.search(src):
+        if src and (src in EXCLUDE_IPS or (EXCLUDE_IP_RE is not None and EXCLUDE_IP_RE.search(src))):
             return
     eid = event.get("eventid")
     # Identify the source: cowrie events have a non-empty "eventid"; dionaea

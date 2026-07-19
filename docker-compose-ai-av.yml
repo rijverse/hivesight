@@ -89,8 +89,10 @@ services:
     environment:
       - PYTHONUNBUFFERED=1
       - ORCH_FORCE_BACKFILL=${ORCH_FORCE_BACKFILL:-0}
-      # Keep your own test traffic out of the AI verdict panels. Same regex the
-      # promtail drop stages use; unset means analyze everything.
+      # Keep your own test traffic out of the AI verdict panels. EXCLUDE_IPS is
+      # the friendly list; EXCLUDE_IP_REGEX is the advanced override (also what
+      # up.sh derives from the list for promtail). Unset both to analyze all.
+      - EXCLUDE_IPS=${EXCLUDE_IPS:-}
       - EXCLUDE_IP_REGEX=${EXCLUDE_IP_REGEX:-}
     volumes:
       - ./orchestrator.py:/app/orchestrator.py:ro

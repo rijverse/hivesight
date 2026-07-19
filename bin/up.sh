@@ -31,6 +31,20 @@ if [[ -f .env ]]; then
     set +a
 fi
 
+# Compile the friendly EXCLUDE_IPS list into the anchored regex the promtail
+# drop stage needs, unless the user pinned EXCLUDE_IP_REGEX directly. Dots are
+# escaped and the whole thing anchored so a short IP can't match a longer one.
+# Exported so compose interpolation (promtail, orchestrator) picks it up.
+if [[ -z "${EXCLUDE_IP_REGEX:-}" && -n "${EXCLUDE_IPS:-}" ]]; then
+    IFS=', ' read -ra _ips <<< "$EXCLUDE_IPS"
+    _alt=""
+    for _ip in "${_ips[@]}"; do
+        [[ -z "$_ip" ]] && continue
+        _alt="${_alt:+$_alt|}${_ip//./\\.}"
+    done
+    [[ -n "$_alt" ]] && export EXCLUDE_IP_REGEX="^($_alt)\$"
+fi
+
 ALL_BUNDLES=(cowrie dionaea logging ai)
 
 MODE="up"
