@@ -29,13 +29,14 @@ sudo ./bin/up.sh --reset             # stop + destroy all data volumes
 The bundles are independent: `logging` and `ai` run fine with no honeypot (the
 dashboards are just empty and the orchestrator has nothing to triage), and a
 honeypot runs fine without them. `ai` and `logging` publish no attack surface,
-so `./bin/up.sh --logging --ai` needs no free ports beyond Grafana's loopback
-3000 and no root.
+so `./bin/up.sh --logging --ai` needs no free ports beyond Grafana's 3000 and
+no root.
 
 Grafana lives at http://localhost:3000 (admin / admin unless you set
-`GRAFANA_ADMIN_PASSWORD` in a `.env` file). The port is bound to loopback
-only. For remote access use an SSH tunnel, never expose it on the honeypot
-interface.
+`GRAFANA_ADMIN_PASSWORD` in a `.env` file). The port is published on all
+interfaces (`0.0.0.0:3000`) and anonymous access is off, so the login form is
+the only way in. Since this host is deliberately attacked, set a strong
+`GRAFANA_ADMIN_PASSWORD` and firewall port 3000 to trusted sources.
 
 ## Running on a workstation
 
