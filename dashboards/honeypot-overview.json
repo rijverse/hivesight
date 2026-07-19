@@ -861,9 +861,9 @@
             "uid": "bfrvx638cgpa8d"
           },
           "expr": "topk(50, sum by (country, lat, lon) (count_over_time({job=\"ai-orchestrator\", source=\"raw\", country!=\"\", country!=\"XX\"} | json | __error__=\"\" [$__range])))",
-          "instant": false,
+          "instant": true,
           "legendFormat": "connections",
-          "queryType": "range",
+          "queryType": "instant",
           "refId": "A"
         }
       ],
